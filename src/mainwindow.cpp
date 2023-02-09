@@ -1,6 +1,6 @@
 #include "ui_mainwindow.h"
 #include "mainwindow.h"
-#include <json-glib/json-glib.h>
+
 #include <QPlainTextEdit>
 #include <QGraphicsView>
 #include <QGraphicsPixmapItem>
@@ -8,6 +8,7 @@
 #include <QShortcut>
 #include <QFile>
 #include <QTextStream>
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -173,37 +174,29 @@ void MainWindow::on_ProcessButton_clicked()
                     view->update();
                     ui->tabWidget->insertTab(ui->tabWidget->count(), view, QString(lightType.c_str()));
 
+                    QString filename = QString("tmp/file_%1.jpg").arg(i);
+
                     int dt = 0;
-                    GError *jerr = nullptr;
-                    JsonParser *parser = json_parser_new();
+                    std::string serial = "";
+                    if (docType.length() && lex.length()) {
+                        Json::Reader *docTypeReader = new Json::Reader(docType);
+                        Json::Reader *lexReader = new Json::Reader(lex);
 
-                    std::cout << "The size of docType is " << docType.length() << " bytes\n";
+                        docTypeReader->fetch("OneCandidate", "FDSIDList", "dType");
+                        Json::Reader::Value resValue = docTypeReader->getValue(Json::Reader::VType::Int);
+                        dt = resValue._int;
 
-                    if (!docType.length()) {
-                        std::cout << "The string of docType is empty\n";
-                    } else if (!json_parser_load_from_data(parser, docType.c_str(), -1, &jerr)) {
-                        std::cout << "Error in parsing json data" << jerr->message;
+                        lexReader->fetch("ListVerifiedFields", "pFieldMaps");
+                        resValue = lexReader->searchElement("FieldType", "Field_Visual", 165);
+                        serial = resValue._string;
 
-                        g_error_free(jerr);
-                        g_object_unref(parser);
-                    } else {
-                        JsonReader *reader = json_reader_new(json_parser_get_root(parser));
-
-                        json_reader_read_member(reader, "OneCandidate");
-                        json_reader_read_member(reader, "FDSIDList");
-                        json_reader_read_member(reader, "dType");
-
-                        dt = json_reader_get_int_value(reader);
-
-                        json_reader_end_member(reader);
-                        json_reader_end_member(reader);
-                        json_reader_end_member(reader);
-
-                        g_object_unref(reader);
-                        g_object_unref(parser);
+                        filename = QString(
+                            std::string("tmp/%1_" + serial + "_%2.jpg").c_str()
+                        )
+                            .arg(dt)
+                            .arg(pageIndex + 1);
                     }
 
-                    QString filename = QString("tmp/file_%1.jpg").arg(dt > 0 ? dt : i);
                     qimg.save(filename);
 
                     sender->addMimePart(

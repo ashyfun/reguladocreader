@@ -2,9 +2,10 @@
 #define MAINWINDOW_H
 
 #include "ui_mainwindow.h"
-#include <QMainWindow>
 #include "documentreader.h"
 #include "documentsender.h"
+#include "jsonreader.h"
+#include <QMainWindow>
 #include <thread>
 
 namespace Ui {

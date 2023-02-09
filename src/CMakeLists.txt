@@ -24,6 +24,9 @@ list(APPEND SRC_LIBS
     documentsender.cpp
     documentsender.h
 
+    jsonreader.cpp
+    jsonreader.h
+
     mainwindow.ui
 )
 
