@@ -192,7 +192,7 @@ void MainWindow::on_ProcessButton_clicked()
                         qimg.save(filename);
 
                         sender->addMimePart("data", lexJson);
-                        sender->addMimePart("type", docType);
+                        sender->addMimePart("type", std::to_string(docType));
                         sender->addMimePart("files", filename.toStdString(), true);
                         sender->addMimePart("deviceInfo", Reader.getDeviceInfo());
                         sender->doPost("http://posts.elros.info/api/v1/regula/parse/");
