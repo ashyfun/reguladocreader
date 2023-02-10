@@ -191,6 +191,8 @@ long DocumentReader::ConnectPasspr()
             passpr40Connected = true;
             std::this_thread::sleep_for(std::chrono::milliseconds(300));
         }
+
+        ExecuteCommand(RPRM_Command_Device_Features, reinterpret_cast<void *>(devCount - 1), &deviceProps);
     }
     else
     {
@@ -503,6 +505,13 @@ std::string DocumentReader::GetRfidKey()
 
 std::string DocumentReader::getFileExtension() {
     return enableJson ? ".json" : ".xml";
+}
+
+std::string DocumentReader::getDeviceInfo() {
+    if (deviceProps) {
+        return deviceProps->LabelSerialNumberStr;
+    }
+    return "";
 }
 
 std::string DocumentReader::GetReaderResult(

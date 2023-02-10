@@ -60,8 +60,8 @@ private:
     DocumentReader Reader;
     bool isDocumentProcessed = false;
 
-    std::string lex = "";
-    std::string docType = "";
+    std::string lexJson = "";
+    std::string docTypeJson = "";
     DocumentSender *sender = nullptr;
 
     void NotificationCallbackHandler(intptr_t code, intptr_t value);

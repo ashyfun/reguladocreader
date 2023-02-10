@@ -18,18 +18,18 @@ private:
     GError *err = nullptr;
 
 public:
-    enum VType {
+    enum MemberType {
         Int,
         Double,
         String,
-        Boolean
+        Bool
     };
 
-    struct Value {
-        int _int;
-        double _double;
-        std::string _string;
-        bool _boolean;
+    struct MemberValue {
+        int mvInt;
+        double mvDouble;
+        std::string mvString;
+        bool mvBool;
     };
 
     Reader(std::string);
@@ -48,30 +48,32 @@ public:
         ++mainIt;
     }
 
-    Value getValue(VType type) {
-        Value _value;
+    MemberValue getValue(MemberType type) {
+        MemberValue v;
 
         switch (type) {
-        case VType::Int:
-            _value._int = json_reader_get_int_value(reader);
+        case MemberType::Int:
+            v.mvInt = json_reader_get_int_value(reader);
             break;
-        case VType::Double:
-            _value._double = json_reader_get_double_value(reader);
+        case MemberType::Double:
+            v.mvDouble = json_reader_get_double_value(reader);
             break;
-        case VType::String:
-            _value._string = json_reader_get_string_value(reader);
+        case MemberType::String:
+            v.mvString = json_reader_get_string_value(reader);
             break;
-        case VType::Boolean:
-            _value._boolean = json_reader_get_boolean_value(reader);
+        case MemberType::Bool:
+            v.mvBool = json_reader_get_boolean_value(reader);
+            break;
+        default:
+            qDebug() << "Member type is unknown:" << type;
             break;
         }
 
         end();
-
-        return _value;
+        return v;
     }
 
-    Value searchElement(std::string, std::string, int);
+    MemberValue searchElement(std::string, std::string, int);
     void end();
 
 };

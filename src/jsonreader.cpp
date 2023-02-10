@@ -27,8 +27,8 @@ Reader::~Reader() {
     g_object_unref(parser);
 }
 
-Reader::Value Reader::searchElement(std::string byKey, std::string member, int compare) {
-    Reader::Value res;
+Reader::MemberValue Reader::searchElement(std::string byKey, std::string member, int compare) {
+    Reader::MemberValue v;
 
     int countElements = json_reader_count_elements(reader);
     for (int i = 0; i < countElements; i++) {
@@ -36,23 +36,21 @@ Reader::Value Reader::searchElement(std::string byKey, std::string member, int c
 
         fetch(byKey.c_str());
         internalIt = 1;
-        res = getValue(Reader::VType::Int);
+        v = getValue(Reader::MemberType::Int);
 
-        // qDebug() << byKey.c_str() << std::to_string(res._int).c_str();
-
-        if (res._int == compare) {
+        if (v.mvInt == compare) {
             fetch(member.c_str());
             internalIt = 1;
-            res = getValue(Reader::VType::String);
+            v = getValue(Reader::MemberType::String);
 
             json_reader_end_element(reader);
-            return res;
+            return v;
         }
 
         json_reader_end_element(reader);
     }
 
-    return res;
+    return v;
 }
 
 void Reader::end() {

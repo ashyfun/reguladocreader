@@ -43,6 +43,8 @@ private:
     rfid::_RFID_CheckResult RFID_CheckResult;
     rfid::_RFID_CheckResultFromList RFID_CheckResultFromList;
 
+    TRegulaDeviceProperties *deviceProps;
+
     static DocumentReader *reader;
 
     static void ResultReceivingCallback(TResultContainer *result, uint32_t *PostAction, uint32_t *PostActionParameter);
@@ -87,6 +89,7 @@ public:
     bool enableJson = false;
 
     std::string getFileExtension();
+    std::string getDeviceInfo();
 };
 
 #endif // DOCUMENTREADER_H

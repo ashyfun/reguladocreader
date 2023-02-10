@@ -102,12 +102,10 @@ void MainWindow::InsertTextTabsForType(eRPRM_ResultType type, const std::string&
             continue;
 
         if (Reader.enableJson) {
-            if (labelBase == "Lex" && !lex.length()) {
-                lex.assign(xmlString);
-                sender->addMimePart("data", xmlString);
-            } else if (labelBase == "DocType" && lex.length() && !docType.length()) {
-                docType.assign(xmlString);
-                sender->addMimePart("type", "222");
+            if (labelBase == "Lex" && !lexJson.length()) {
+                lexJson.assign(xmlString);
+            } else if (labelBase == "DocType" && !docTypeJson.length() && lexJson.length()) {
+                docTypeJson.assign(xmlString);
             }
         }
 
@@ -174,36 +172,36 @@ void MainWindow::on_ProcessButton_clicked()
                     view->update();
                     ui->tabWidget->insertTab(ui->tabWidget->count(), view, QString(lightType.c_str()));
 
-                    QString filename = QString("tmp/file_%1.jpg").arg(i);
-
-                    int dt = 0;
-                    std::string serial = "";
-                    if (docType.length() && lex.length()) {
-                        Json::Reader *docTypeReader = new Json::Reader(docType);
-                        Json::Reader *lexReader = new Json::Reader(lex);
+                    int docType = 0;
+                    std::string docSerial = "";
+                    if (docTypeJson.length() && lexJson.length()) {
+                        Json::Reader *docTypeReader = new Json::Reader(docTypeJson);
+                        Json::Reader *lexReader = new Json::Reader(lexJson);
 
                         docTypeReader->fetch("OneCandidate", "FDSIDList", "dType");
-                        Json::Reader::Value resValue = docTypeReader->getValue(Json::Reader::VType::Int);
-                        dt = resValue._int;
+                        Json::Reader::MemberValue tmp = docTypeReader->getValue(Json::Reader::MemberType::Int);
+                        docType = tmp.mvInt;
 
                         lexReader->fetch("ListVerifiedFields", "pFieldMaps");
-                        resValue = lexReader->searchElement("FieldType", "Field_Visual", 165);
-                        serial = resValue._string;
+                        tmp = lexReader->searchElement("FieldType", "Field_Visual", 165);
+                        docSerial = tmp.mvString;
 
-                        filename = QString(
-                            std::string("tmp/%1_" + serial + "_%2.jpg").c_str()
-                        )
-                            .arg(dt)
+                        QString filename = QString(std::string("tmp/%1_" + docSerial + "_%2.jpg").c_str())
+                            .arg(docType)
                             .arg(pageIndex + 1);
+                        qimg.save(filename);
+
+                        sender->addMimePart("data", lexJson);
+                        sender->addMimePart("type", docType);
+                        sender->addMimePart("files", filename.toStdString(), true);
+                        sender->addMimePart("deviceInfo", Reader.getDeviceInfo());
+                        sender->doPost("http://posts.elros.info/api/v1/regula/parse/");
+
+                        docTypeJson = lexJson = "";
+
+                        delete docTypeReader;
+                        delete lexReader;
                     }
-
-                    qimg.save(filename);
-
-                    sender->addMimePart(
-                        (resultsCount > 1 ? "file" + std::to_string(i + 1) : "files"),
-                        filename.toStdString(),
-                        true
-                    );
                 }
 
                 resultsCount = Reader.GetReaderResultsCount(RPRM_ResultType_Graphics);
@@ -290,9 +288,6 @@ void MainWindow::on_ProcessButton_clicked()
                         ui->tabWidget->insertTab(ui->tabWidget->count(), textEdit, "RFID binary");
                     }
                 }
-
-                sender->doPost("http://192.168.100.73:5000");
-                lex = docType = "";
             }
         }
         catch (std::exception &ex)
