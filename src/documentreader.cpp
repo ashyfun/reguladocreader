@@ -257,6 +257,7 @@ long DocumentReader::ConnectRFID()
     RFID_SetCallbackFunc((RFID_NotifyFunc)&RFID_NotifyCallback);
     long devCount = 0;
     res = RFID_ExecuteCommand(RFID_Command_Get_DeviceCount, nullptr, &devCount);
+    devCount = 0;
     qDebug () << "Devices count result:" << Qt::hex << res << Qt::dec << Qt::endl << "Found devices:" << devCount;
     if(devCount > 0)
     {
