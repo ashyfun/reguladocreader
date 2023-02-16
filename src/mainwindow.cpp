@@ -6,6 +6,7 @@
 #include <QGraphicsPixmapItem>
 #include <QMessageBox>
 #include <QShortcut>
+#include <QSettings>
 #include <QFile>
 #include <QTextStream>
 
@@ -23,6 +24,14 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     currentWindow = this;
     ui->setupUi(this);
+
+    QSettings ui_settings("RegulaDocumentReader", "ui_settings");
+    ui->VdCheckBox->setChecked(ui_settings.value("checkbox/videoDetection").toBool());
+    // ui->JsonCheckBox->setChecked(ui_settings.value("checkbox/jsonFormat").toBool());
+    if (ui_settings.contains("checkbox/autoscan")) {
+        ui->AutoscanCheckBox->setChecked(ui_settings.value("checkbox/autoscan").toBool());
+    }
+
     connect(this, SIGNAL(documentInserted()), SLOT(on_DocumentInserted()));
     connect(this, SIGNAL(askCalibrationOject(int)), SLOT(on_AskCalibrationObject(int)));
     connect(this, SIGNAL(deviceDisconnected()), SLOT(on_DeviceDisconnected()));
@@ -39,6 +48,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    QSettings ui_settings("RegulaDocumentReader", "ui_settings");
+    ui_settings.setValue("checkbox/videoDetection", ui->VdCheckBox->isChecked());
+    // ui_settings.setValue("checkbox/jsonFormat", ui->JsonCheckBox->isChecked());
+    ui_settings.setValue("checkbox/autoscan", ui->AutoscanCheckBox->isChecked());
+
     delete ui;
     delete sender;
 }
@@ -50,13 +64,15 @@ void MainWindow::setStates(bool readerIsConnected)
     ui->ProcessButton->setEnabled(readerIsConnected);
     ui->CalibrateButton->setEnabled(readerIsConnected);
     ui->VdCheckBox->setEnabled(!readerIsConnected);
-    ui->JsonCheckBox->setEnabled(!readerIsConnected);
+    // ui->JsonCheckBox->setEnabled(!readerIsConnected);
+    ui->AutoscanCheckBox->setEnabled(!readerIsConnected);
 }
 
 void MainWindow::on_ConnectButton_clicked()
 {
     Reader.enableVd = ui->VdCheckBox->isChecked();
     Reader.enableJson = ui->JsonCheckBox->isChecked();
+    Reader.enableAutoscan = ui->AutoscanCheckBox->isChecked();
 
     Reader.SetNotificationCallback(&MainWindow::StaticNotificationCallbackHandler);
     Reader.VdCallback = MainWindow::VdResultsHandler;
@@ -157,6 +173,8 @@ void MainWindow::on_ProcessButton_clicked()
                 InsertTextTabsForType(RPRM_ResultType_ChosenDocumentTypeCandidate, "DocType");
 
                 long resultsCount = Reader.GetReaderResultsCount(RPRM_ResultType_RawImage);
+                long docType = 0;
+                std::string docSerial = "";
                 for(long i = 0; i < resultsCount; ++i) // and images
                 {
                     std::string lightType;
@@ -172,36 +190,46 @@ void MainWindow::on_ProcessButton_clicked()
                     view->update();
                     ui->tabWidget->insertTab(ui->tabWidget->count(), view, QString(lightType.c_str()));
 
-                    int docType = 0;
-                    std::string docSerial = "";
-                    if (docTypeJson.length() && lexJson.length()) {
+                    Json::Reader::MemberValue tmp;
+                    if (docTypeJson.length()) {
                         Json::Reader *docTypeReader = new Json::Reader(docTypeJson);
-                        Json::Reader *lexReader = new Json::Reader(lexJson);
 
                         docTypeReader->fetch("OneCandidate", "FDSIDList", "dType");
-                        Json::Reader::MemberValue tmp = docTypeReader->getValue(Json::Reader::MemberType::Int);
+                        tmp = docTypeReader->getValue(Json::Reader::MemberType::Int);
                         docType = tmp.mvInt;
+
+                        sender->addMimePart("type", std::to_string(docType));
+
+                        docTypeJson = "";
+                        delete docTypeReader;
+                    }
+
+                    if (lexJson.length()) {
+                        Json::Reader *lexReader = new Json::Reader(lexJson);
 
                         lexReader->fetch("ListVerifiedFields", "pFieldMaps");
                         tmp = lexReader->searchElement("FieldType", "Field_Visual", 165);
                         docSerial = tmp.mvString;
 
+                        sender->addMimePart("data", lexJson);
+
+                        lexJson = "";
+                        delete lexReader;
+                    }
+
+                    if (docType > 0 && docSerial.length()) {
                         QString filename = QString(std::string("tmp/%1_" + docSerial + "_%2.jpg").c_str())
                             .arg(docType)
                             .arg(pageIndex + 1);
                         qimg.save(filename);
 
-                        sender->addMimePart("data", lexJson);
-                        sender->addMimePart("type", std::to_string(docType));
                         sender->addMimePart("files", filename.toStdString(), true);
-                        sender->addMimePart("deviceInfo", Reader.getDeviceInfo());
-                        sender->doPost("http://posts.elros.info/api/v1/regula/parse/");
-
-                        docTypeJson = lexJson = "";
-
-                        delete docTypeReader;
-                        delete lexReader;
                     }
+                }
+
+                sender->addMimePart("deviceInfo", Reader.getDeviceInfo());
+                if (sender->howManyMimeParts() > 3) {
+                    sender->doPost("http://posts.elros.info/api/v1/regula/parse/");
                 }
 
                 resultsCount = Reader.GetReaderResultsCount(RPRM_ResultType_Graphics);
@@ -322,7 +350,9 @@ void MainWindow::on_AskCalibrationObject(int index)
 
 void MainWindow::on_DocumentInserted()
 {
-    on_ProcessButton_clicked();
+    if (Reader.enableAutoscan) {
+        on_ProcessButton_clicked();
+    }
 }
 
 void MainWindow::on_DeviceDisconnected()

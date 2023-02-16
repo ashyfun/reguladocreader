@@ -46,6 +46,10 @@ void DocumentSender::addMimePart(std::string name, std::string value, bool isFil
     preparedMime.push_back(Mime{ name, value, isFile });
 }
 
+unsigned DocumentSender::howManyMimeParts() {
+    return preparedMime.size();
+}
+
 void DocumentSender::doPost(std::string url) {
     if (curl) {
         curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");

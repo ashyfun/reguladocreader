@@ -11,7 +11,7 @@
       </rect>
     </property>
     <property name="windowTitle">
-      <string>MainWindow</string>
+      <string>Regula Document Reader</string>
     </property>
     <widget class="QWidget" name="centralWidget">
       <property name="layoutDirection">
@@ -44,7 +44,7 @@
                   </size>
                 </property>
                 <property name="text">
-                  <string>Connect</string>
+                  <string>Подключить</string>
                 </property>
                 <property name="shortcut">
                   <string>Alt+C</string>
@@ -69,7 +69,7 @@
                   </size>
                 </property>
                 <property name="text">
-                  <string>Disconnect</string>
+                  <string>Отключить</string>
                 </property>
                 <property name="shortcut">
                   <string>Alt+D</string>
@@ -94,7 +94,7 @@
                   </size>
                 </property>
                 <property name="text">
-                  <string>Process</string>
+                  <string>Сканировать</string>
                 </property>
                 <property name="shortcut">
                   <string>F3</string>
@@ -119,17 +119,10 @@
                   </size>
                 </property>
                 <property name="text">
-                  <string>Calibrate</string>
+                  <string>Калибровать</string>
                 </property>
                 <property name="shortcut">
                   <string>Ctrl+R</string>
-                </property>
-              </widget>
-            </item>
-            <item>
-              <widget class="QCheckBox" name="VdCheckBox">
-                <property name="text">
-                  <string>VD enable</string>
                 </property>
               </widget>
             </item>
@@ -149,11 +142,31 @@
           </layout>
         </item>
         <item>
-          <widget class="QCheckBox" name="JsonCheckBox">
+          <widget class="QCheckBox" name="VdCheckBox">
             <property name="text">
-              <string>Save as JSON</string>
+              <string>Включить видеодетекцию</string>
+            </property>
+          </widget>
+        </item>
+        <item>
+          <widget class="QCheckBox" name="AutoscanCheckBox">
+            <property name="text">
+              <string>Автосканирование</string>
             </property>
             <property name="checked">
+              <bool>true</bool>
+            </property>
+          </widget>
+        </item>
+        <item>
+          <widget class="QCheckBox" name="JsonCheckBox">
+            <property name="text">
+              <string>Формат JSON</string>
+            </property>
+            <property name="checked">
+              <bool>true</bool>
+            </property>
+            <property name="disabled">
               <bool>true</bool>
             </property>
           </widget>

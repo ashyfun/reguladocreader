@@ -32,6 +32,7 @@ public:
 
     void setHeaders(std::vector<std::string> &);
     void addMimePart(std::string, std::string, bool = false);
+    unsigned howManyMimeParts();
     void doPost(std::string);
 
 };

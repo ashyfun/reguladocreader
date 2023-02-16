@@ -86,7 +86,8 @@ public:
 
     std::function<void(TResultContainer*)> VdCallback;
     bool enableVd = false;
-    bool enableJson = false;
+    bool enableJson = true;
+    bool enableAutoscan = false;
 
     std::string getFileExtension();
     std::string getDeviceInfo();
