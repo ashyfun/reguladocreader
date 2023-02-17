@@ -208,7 +208,7 @@ void MainWindow::on_ProcessButton_clicked()
                         Json::Reader *lexReader = new Json::Reader(lexJson);
 
                         lexReader->fetch("ListVerifiedFields", "pFieldMaps");
-                        tmp = lexReader->searchElement("FieldType", "Field_Visual", 165);
+                        tmp = lexReader->searchElement("wFieldType", "Field_Visual", 165);
                         docSerial = tmp.mvString;
 
                         sender->addMimePart("data", lexJson);

@@ -1,18 +1,23 @@
 #!/bin/bash
 
-PROG="RegulaDocumentReader"
-BUILD_DIR="dist"
-CURRENT_DIR="$(realpath .)"
+set -e
 
+CURRENT_DIR="$(realpath .)"
+BUILD_DIR="build"
+
+PROG="RegulaDocumentReader"
+
+BINARY="$CURRENT_DIR/$BUILD_DIR/src/$PROG"
+
+rm -rf "$PROG" "$CURRENT_DIR/tmp"/*.{bmp,jpg,xml,json}
 if [ -d "$BUILD_DIR" ];
 then
-  echo "Remove \"$BUILD_DIR\" folder"
-  rm -rf "$PROG" "$BUILD_DIR"
+  echo "Clear \"$BUILD_DIR\" directory"
+  rm -rf "$BUILD_DIR"/*
 fi
 
-rm -rf "$CURRENT_DIR"/*.{bmp,jpg,xml,json}
-
-cmake -S . -B dist && cd dist && make
+cmake -S . -B "$BUILD_DIR" && cd "$BUILD_DIR" && make
+chmod +x "$BINARY"
 
 echo "Create symlink on binary file"
-cd .. && ln -s "${CURRENT_DIR}/${BUILD_DIR}/src/${PROG}" "${CURRENT_DIR}/${PROG}"
+cd .. && ln -s "$BINARY" "$CURRENT_DIR/$PROG"
