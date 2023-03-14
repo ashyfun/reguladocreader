@@ -46,6 +46,21 @@ void DocumentSender::addMimePart(std::string name, std::string value, bool isFil
     preparedMime.push_back(Mime{ name, value, isFile });
 }
 
+bool DocumentSender::mimeIsExist(std::string name)
+{
+    bool isExist = false;
+    for (auto mime : preparedMime)
+    {
+        if (mime.name == name)
+        {
+            isExist = true;
+            break;
+        }
+    }
+
+    return isExist;
+}
+
 unsigned DocumentSender::howManyMimeParts() {
     return preparedMime.size();
 }
@@ -60,7 +75,7 @@ void DocumentSender::doPost(std::string url) {
 
         CURLcode res = curl_easy_perform(curl);
         if (res != CURLE_OK) {
-            qDebug() << "curl_easy_perform() failed:" << curl_easy_strerror(res);
+            qDebug() << "curl_easy_perform() failed:" << curl_easy_strerror(res) << "\n";
         }
 
         preparedMime.clear();

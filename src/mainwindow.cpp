@@ -10,6 +10,10 @@
 #include <QFile>
 #include <QTextStream>
 
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -173,6 +177,11 @@ void MainWindow::on_ProcessButton_clicked()
                 InsertTextTabsForType(RPRM_ResultType_ChosenDocumentTypeCandidate, "DocType");
 
                 long resultsCount = Reader.GetReaderResultsCount(RPRM_ResultType_RawImage);
+                if (resultsCount == 1)
+                {
+                    sender->preparedMime.clear();
+                }
+
                 long docType = 0;
                 std::string docSerial = "";
                 for(long i = 0; i < resultsCount; ++i) // and images
@@ -181,6 +190,7 @@ void MainWindow::on_ProcessButton_clicked()
                     long pageIndex;
                     std::vector<uint8_t> imageVector = Reader.GetReaderResultImage(RPRM_ResultType_RawImage, i, lightType, pageIndex);
                     QImage qimg;
+                    Json::Reader::MemberValue tmp;
                     qimg.loadFromData(imageVector.data(), imageVector.size());
                     QGraphicsScene* scene = new QGraphicsScene();
                     scene->addPixmap(QPixmap::fromImage(qimg));
@@ -190,21 +200,7 @@ void MainWindow::on_ProcessButton_clicked()
                     view->update();
                     ui->tabWidget->insertTab(ui->tabWidget->count(), view, QString(lightType.c_str()));
 
-                    Json::Reader::MemberValue tmp;
-                    if (docTypeJson.length()) {
-                        Json::Reader *docTypeReader = new Json::Reader(docTypeJson);
-
-                        docTypeReader->fetch("OneCandidate", "FDSIDList", "dType");
-                        tmp = docTypeReader->getValue(Json::Reader::MemberType::Int);
-                        docType = tmp.mvInt;
-
-                        sender->addMimePart("type", std::to_string(docType));
-
-                        docTypeJson = "";
-                        delete docTypeReader;
-                    }
-
-                    if (lexJson.length()) {
+                    if (lexJson.length() && !sender->mimeIsExist("data")) {
                         Json::Reader *lexReader = new Json::Reader(lexJson);
 
                         lexReader->fetch("ListVerifiedFields", "pFieldMaps");
@@ -217,19 +213,31 @@ void MainWindow::on_ProcessButton_clicked()
                         delete lexReader;
                     }
 
-                    if (docType > 0 && docSerial.length()) {
-                        QString filename = QString(std::string("tmp/%1_" + docSerial + "_%2.jpg").c_str())
-                            .arg(docType)
-                            .arg(pageIndex + 1);
-                        qimg.save(filename);
+                    if (docTypeJson.length() && !sender->mimeIsExist("type")) {
+                        Json::Reader *docTypeReader = new Json::Reader(docTypeJson);
 
-                        sender->addMimePart("files", filename.toStdString(), true);
+                        docTypeReader->fetch("OneCandidate", "FDSIDList", "dType");
+                        tmp = docTypeReader->getValue(Json::Reader::MemberType::Int);
+                        docType = tmp.mvInt;
+
+                        sender->addMimePart("type", std::to_string(docType));
+
+                        docTypeJson = "";
+                        delete docTypeReader;
                     }
+
+                    boost::uuids::uuid uuid = boost::uuids::random_generator()();
+                    QString filename = QString(std::string("tmp/" + boost::uuids::to_string(uuid) + "_%1.jpg").c_str())
+                        .arg(pageIndex + 1);
+                    qimg.save(filename);
+
+                    sender->addMimePart("files", filename.toStdString(), true);
                 }
 
-                sender->addMimePart("deviceInfo", Reader.getDeviceInfo());
-                if (sender->howManyMimeParts() > 3) {
+                if (sender->howManyMimeParts() > 2) {
+                    sender->addMimePart("deviceInfo", Reader.getDeviceInfo());
                     sender->doPost("http://posts.elros.info/api/v1/regula/parse/");
+                    // sender->doPost("http://localhost:5000");
                 }
 
                 resultsCount = Reader.GetReaderResultsCount(RPRM_ResultType_Graphics);

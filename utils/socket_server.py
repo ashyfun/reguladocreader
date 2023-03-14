@@ -29,7 +29,7 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def server_run(server_class=HTTPServer, handler_class=Handler):
-    host = '192.168.100.73'
+    host = 'localhost'
     port = 5000
 
     print('Starting HTTP server on ' + host + ':' + str(port))

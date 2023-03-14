@@ -1,14 +1,19 @@
 find_package(Qt5 COMPONENTS Core Widgets CONFIG REQUIRED)
+find_package(Boost REQUIRED)
 find_package(CURL REQUIRED)
 find_package(regulaSdk 6 CONFIG REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(JSON-GLIB REQUIRED json-glib-1.0)
 
-include_directories(${JSON-GLIB_INCLUDE_DIRS})
+include_directories(
+    ${Boost_INCLUDE_DIRS}
+    ${JSON-GLIB_INCLUDE_DIRS}
+)
 
 set(LINK_LIBS
     ${Qt5Core_LIBRARIES}
     ${Qt5Widgets_LIBRARIES}
+    ${Boost_LIBRARIES}
     ${CURL_LIBRARIES}
     regulaSdk::regulaSdk
     ${JSON-GLIB_LIBRARIES}
